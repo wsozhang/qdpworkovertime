@@ -25,7 +25,8 @@
             .print-border {
                 border: 1px solid #000 !important;
             }
-            input, select, textarea {
+            /* 排除核取方塊與單選鈕，避免 appearance: none 導致打勾圖示消失 */
+            input:not([type="checkbox"]):not([type="radio"]), select, textarea {
                 border: none !important;
                 background: transparent !important;
                 appearance: none !important;
@@ -35,12 +36,15 @@
             .print-shadow-none {
                 box-shadow: none !important;
             }
+            /* 強制列印核取方塊、單選鈕的打勾與選取樣式 */
             input[type="checkbox"], input[type="radio"] {
                 border: 1px solid #000 !important;
+                -webkit-print-color-adjust: exact !important;
+                print-color-adjust: exact !important;
             }
             /* 縮緊表格，確保 A4 一頁塞得下所有工作日 */
             table {
-                font-size: 10px !important;
+                font-size: 12px !important;
                 line-height: 1.15 !important;
             }
             th, td {
@@ -48,15 +52,19 @@
             }
             .mt-6 {
                 margin-top: 4px !important;
-                font-size: 8px !important;
+                font-size: 10px !important;
                 line-height: 1.2 !important;
+            }
+            /* 設定簽章蓋印列的高，確保能容納一般印章高度 (約 1.5 cm) */
+            .stamp-row {
+                height: 1.5cm !important;
             }
         }
     </style>
 </head>
 <body class="bg-gray-50 min-h-screen py-8 px-4 sm:px-6 lg:px-8 text-gray-800">
 
-    <!-- 提示訊息 Modal (修正定位為 items-start pt-10，讓提示視窗直接置頂顯示) -->
+    <!-- 提示訊息 Modal -->
     <div id="noticeModal" class="fixed inset-0 bg-gray-900 bg-opacity-60 flex items-start justify-center z-50 no-print pt-10 overflow-y-auto">
         <div class="bg-white rounded-xl shadow-2xl p-6 sm:p-8 max-w-md w-full mx-4 my-8 border border-blue-50 transform transition-all scale-100">
             <div class="flex items-center gap-3 mb-4 text-amber-600">
@@ -67,17 +75,23 @@
             </div>
             <div class="space-y-4 text-gray-700 text-sm sm:text-base leading-relaxed mb-6">
                 <p class="font-medium bg-amber-50 p-3 rounded-lg border-l-4 border-amber-500">
-                    1、在下載Word存檔之前請把學校活動補假日改成不加班申請。
+                    1、加班預設時間上午下午各15分，如是專任行政人員要改成30分請自行按按鈕。
+                </p>
+                <p class="font-medium bg-amber-50 p-3 rounded-lg border-l-4 border-amber-500">
+                    2、在列印之前請把學校活動補假日改成不加班申請，或是下載word檔後自行修正。
                 </p>
                 <p class="font-medium bg-blue-50 p-3 rounded-lg border-l-4 border-blue-500">
-                    2、人員身分預設值是教師兼行政，如是其他身分記得更改身分 (有關是否 *1.5 倍)。
+                    3、人員身分預設值是教師兼行政，如是其他身分記得更改身分 (有關是否 *1.5 倍)。
                 </p>
                 <p class="font-medium bg-blue-50 p-3 rounded-lg border-l-4 border-blue-500">
-                    3、最後再確認日期是否錯誤，系統產生的工作日不一定正確，請務必檢查。
+                    4、最後再確認日期是否錯誤，系統產生的工作日不一定正確，請務必檢查。
                 </p> 
                 <p class="font-medium bg-blue-50 p-3 rounded-lg border-l-4 border-blue-500">
-                    4、如果要手動該改加班日期，請直接滑鼠點擊該日期欄位手動修改。
-                </p> 
+                    5、如果要手動修改加班日期，請滑鼠直接點選該日期欄位修改。
+                </p>
+                 <p class="font-medium bg-blue-50 p-3 rounded-lg border-l-4 border-blue-500">
+                    6、2月、8月的加班時數如果較少建議下載word檔案自行修改成跟3月、9月合併。
+                </p>
             </div>
             <div class="flex justify-end">
                 <button onclick="closeModal()" class="w-full sm:w-auto px-6 py-2.5 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-lg shadow-sm transition">
@@ -89,9 +103,30 @@
 
     <div class="max-w-4xl mx-auto bg-white p-6 sm:p-8 rounded-xl shadow-md print-shadow-none border border-gray-100 print-border">
         
-        <!-- 頂部操作按鈕 (列印時隱藏) -->
-        <div class="flex justify-end gap-3 mb-6 no-print">
-            <!-- 已將原來的列印按鈕改成「下載 Word 檔」，並連結 exportToWord 函數 -->
+        <!-- 頂部操作按鈕 (列印時隱藏) 加入 flex-wrap 防止按鈕過多時跑版 -->
+        <div class="flex flex-wrap justify-end gap-3 mb-6 no-print">
+            <!-- 新增的預設時間 15 分按鈕 -->
+            <button onclick="setDefaultTime(15)" class="px-4 py-2 bg-indigo-500 hover:bg-indigo-600 text-white font-medium rounded-lg shadow-sm transition flex items-center gap-2">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+                加班預設時間15分
+            </button>
+            <!-- 新增的預設時間 30 分按鈕 -->
+            <button onclick="setDefaultTime(30)" class="px-4 py-2 bg-indigo-500 hover:bg-indigo-600 text-white font-medium rounded-lg shadow-sm transition flex items-center gap-2">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+                加班預設時間30分
+            </button>
+
+            <!-- 列印申請表按鈕 -->
+            <button onclick="window.print()" class="px-4 py-2 bg-green-600 hover:bg-green-700 text-white font-medium rounded-lg shadow-sm transition flex items-center gap-2">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z" />
+                </svg>
+                列印申請表
+            </button>
             <button onclick="exportToWord()" class="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-lg shadow-sm transition flex items-center gap-2">
                 <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
@@ -208,13 +243,13 @@
                         </td>
                     </tr>
                     <!-- 第四列：簽名確認與人事室 -->
-                    <tr>
+                    <tr class="stamp-row h-16">
                         <!-- 第4列 第1欄 -->
                         <td class="border-2 border-gray-800 px-4 py-3 font-semibold text-gray-700 text-center align-middle bg-gray-50/30" colspan="3" style="width: 25%;">
                             當事人簽名確認
                         </td>
                         <!-- 第4列 第2欄 (留白) -->
-                        <td class="border-2 border-gray-800 px-4 py-3 text-center align-middle min-h-[44px]" colspan="3" style="width: 25%;">
+                        <td class="border-2 border-gray-800 px-4 py-3 text-center align-middle" colspan="3" style="width: 25%;">
                             <!-- 留白等列印蓋章/簽名 -->
                         </td>
                         <!-- 第4列 第3欄 -->
@@ -222,18 +257,18 @@
                             人事室
                         </td>
                         <!-- 第4列 第4欄 (留白) -->
-                        <td class="border-2 border-gray-800 px-4 py-3 text-center align-middle min-h-[44px]" colspan="3" style="width: 25%;">
+                        <td class="border-2 border-gray-800 px-4 py-3 text-center align-middle" colspan="3" style="width: 25%;">
                             <!-- 留白等列印蓋章 -->
                         </td>
                     </tr>
                     <!-- 第五列：單位主任與校長 -->
-                    <tr>
+                    <tr class="stamp-row h-16">
                         <!-- 第5列 第1欄 -->
                         <td class="border-2 border-gray-800 px-4 py-3 font-semibold text-gray-700 text-center align-middle bg-gray-50/30" colspan="3" style="width: 25%;">
                             單位主任
                         </td>
                         <!-- 第5列 第2欄 (留白) -->
-                        <td class="border-2 border-gray-800 px-4 py-3 text-center align-middle min-h-[44px]" colspan="3" style="width: 25%;">
+                        <td class="border-2 border-gray-800 px-4 py-3 text-center align-middle" colspan="3" style="width: 25%;">
                             <!-- 留白等列印蓋章 -->
                         </td>
                         <!-- 第5列 第3欄 -->
@@ -241,7 +276,7 @@
                             校長
                         </td>
                         <!-- 第5列 第4欄 (留白) -->
-                        <td class="border-2 border-gray-800 px-4 py-3 text-center align-middle min-h-[44px]" colspan="3" style="width: 25%;">
+                        <td class="border-2 border-gray-800 px-4 py-3 text-center align-middle" colspan="3" style="width: 25%;">
                             <!-- 留白等列印蓋章 -->
                         </td>
                     </tr>
@@ -253,7 +288,7 @@
                         </td>
                     </tr>
 
-                    <!-- 第七列：細分多層級表頭 (寬度比例重整分配，保持第2、3、4、5等寬為 21%) -->
+                    <!-- 第七列：細分多層級表頭 -->
                     <tr class="bg-gray-50 text-xs sm:text-sm">
                         <!-- 第7列 第1欄 (加班日期，跨兩列) -->
                         <th class="border-2 border-gray-800 px-2 py-2 font-semibold text-gray-700 text-center align-middle" rowspan="2" colspan="2" style="width: 16%;">
@@ -299,24 +334,20 @@
 
                 <!-- 彙整加總與最終時數計算 -->
                 <tfoot>
-                    <!-- 倒數第 2 列：修改成2欄 -->
+                    <!-- 倒數第 2 列 -->
                     <tr class="bg-blue-50/10 font-bold text-center text-sm sm:text-base">
-                        <!-- 第1欄：佔 8/12 欄寬，顯示總時間文字 -->
                         <td class="border-2 border-gray-800 px-4 py-3 text-right text-gray-800 font-bold" colspan="8">
                             當月總計延長工作時間總時間
                         </td>
-                        <!-- 第2欄：佔 4/12 欄寬，顯示上方每日加班時間的加總 -->
                         <td id="totalDailyOvertime" class="border-2 border-gray-800 px-4 py-3 text-blue-700 print:text-black font-bold text-base" colspan="4">
                             0 分鐘
                         </td>
                     </tr>
-                    <!-- 最後 1 列：根據人員身分動態改變（共2欄） -->
+                    <!-- 最後 1 列 -->
                     <tr class="bg-blue-50/30 font-bold text-center">
-                        <!-- 第1欄：顯示當月總計延長工作時間總時數文字 (佔 8/12 欄寬) -->
                         <td id="totalOvertimeLabel" class="border-2 border-gray-800 px-4 py-3 text-right text-gray-800 text-base font-bold" colspan="8">
                             當月總計延長工作時間*1.5倍總時數
                         </td>
-                        <!-- 第2欄：顯示動態計算加權與除以60無條件進位後的數值 (佔 4/12 欄寬) -->
                         <td id="totalOvertimeValue" class="border-2 border-gray-800 px-4 py-3 text-blue-700 print:text-black text-lg font-extrabold" colspan="4">
                             0 小時
                         </td>
@@ -326,7 +357,7 @@
         </div>
 
         <!-- 說明文字 -->
-        <div class="mt-6 text-xs text-gray-600 space-y-1.5 leading-relaxed border-t border-gray-200 pt-4 print:border-t-0">
+        <div class="mt-6 text-xs text-gray-600 space-y-1.5 leading-relaxed border-t border-gray-200 pt-4 print:border-t-0 no-print">
             <p class="font-semibold text-gray-800">注意事項說明：</p>
             <p>1. 行政人員加班，應由各處室主管視業務需要覈實指派，並請儘量於事前辦妥本線上申請 or 書面陳核程序。</p>
             <p>2. 計算之「工作日」已排除固定例假日（週六、週日）及行政院人事行政總處公布之國定假日與補假（如元旦、春節、清明、端午、中秋、國慶等）。</p>
@@ -335,33 +366,28 @@
     </div>
 
     <script>
-        // 台灣固定國定假日定義 (格式: "MM-DD")
+        // 記錄目前的加班預設時間 (初始為15分鐘)
+        let currentDefaultTime = 15;
+
+        // 台灣固定國定假日定義
         const fixedHolidays = [
-            "01-01", // 元旦
-            "02-28", // 和平紀念日
-            "04-04", // 兒童節
-            "04-05", // 民族掃墓節/清明節
-            "05-01", // 勞動節
-            "10-10", // 國慶日
-            "09-28", // 教師節
-            "10/25", // 行憲紀念日
+            "01-01", "02-28", "04-04", "04-05", "05-01", "10-10","10-25","12-25"
         ];
 
         // 估算特定西元年的農曆變動國定假日對照表 (2024~2030)
         const variableHolidays = {
             2024: ["02-08", "02-09", "02-10", "02-11", "02-12", "02-13", "02-14", "04-04", "04-05", "06-10", "09-17"],
             2025: ["01-27", "01-28", "01-29", "01-30", "01-31", "02-01", "02-02", "04-03", "04-04", "05-30", "05-31", "10-06"],
-            2026: ["02-13", "02-14", "02-15", "02-16", "02-17", "02-18", "02-19", "02-20", "02-21", "04-06", "04-03", "04-04", "04-05", "05-01", "06-19", "09-25"],
+            2026: ["02-13", "02-14", "02-15", "02-16", "02-17", "02-18", "02-19", "02-20", "02-21", "04-03", "04-04", "04-05", "04-06", "06-19", "09-25"],
             2027: ["02-05", "02-06", "02-07", "02-08", "02-09", "02-10", "02-11", "02-12", "04-02", "04-03", "04-04", "04-05", "06-09", "09-15"],
             2028: ["01-25", "01-26", "01-27", "01-28", "01-29", "01-30", "01-31", "02-01", "02-02", "04-03", "04-04", "04-05", "05-28", "10-03"],
             2029: ["02-12", "02-13", "02-14", "02-15", "02-16", "02-17", "02-18", "04-04", "04-05", "04-06", "06-15", "09-21"],
             2030: ["02-01", "02-02", "02-03", "02-04", "02-05", "02-06", "02-07", "02-08", "04-04", "04-05", "06-05", "09-12"]
         };
 
-        // 補班工作日定義（有些彈性調整放假需補班，計為工作日，格式: "YYYY-MM-DD"）
+        // 補班工作日定義
         const makeUpWorkdays = [
-            "2024-02-17",
-            "2025-02-08"
+            "2024-02-17", "2025-02-08"
         ];
 
         // 星期名稱對照
@@ -373,6 +399,31 @@
         function closeModal() {
             const modal = document.getElementById("noticeModal");
             modal.style.display = "none";
+        }
+
+        /**
+         * 變更全域加班預設時間並更新現有有勾選的欄位
+         */
+        function setDefaultTime(mins) {
+            currentDefaultTime = mins;
+            const rowsCount = document.getElementById("dailyOvertimeTableBody").children.length;
+            
+            for (let i = 0; i < rowsCount; i++) {
+                // 早上時段
+                const morningSelect = document.getElementById(`morning_time_${i}`);
+                if (morningSelect && !morningSelect.disabled) {
+                    morningSelect.value = mins.toString();
+                    updateRowTotal(i);
+                }
+                
+                // 下午時段
+                const afternoonSelect = document.getElementById(`afternoon_time_${i}`);
+                if (afternoonSelect && !afternoonSelect.disabled) {
+                    afternoonSelect.value = mins.toString();
+                    updateRowTotal(i);
+                }
+            }
+            updateTotals();
         }
 
         /**
@@ -464,13 +515,13 @@
                 const tr = document.createElement("tr");
                 tr.className = "hover:bg-gray-50/50 transition text-center";
                 tr.innerHTML = `
-                    <!-- 日期 (16%) - 已修改為可讓使用者手動編輯文字的 Input 欄位 -->
+                    <!-- 日期 -->
                     <td class="border-2 border-gray-800 px-1 py-1 font-medium bg-gray-50/20" colspan="2" style="width: 16%;">
                         <input type="text" id="date_input_${index}" value="${day.dateString}" 
                                class="w-full text-center bg-transparent focus:outline-none focus:ring-1 focus:ring-blue-500 rounded text-xs sm:text-sm py-1">
                     </td>
                     
-                    <!-- 早上時段申請：有(預設勾選)/無/時間(預設啟用) (21% divided) -->
+                    <!-- 早上時段申請 -->
                     <td class="border-2 border-gray-800 px-1 py-1" style="width: 7%;">
                         <input type="checkbox" name="morning_status_${index}" value="yes" checked
                                class="h-4 w-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
@@ -485,14 +536,15 @@
                         <select id="morning_time_${index}"
                                 class="w-full px-1 text-center bg-transparent border-b border-gray-200 focus:outline-none focus:border-blue-500 text-xs disabled:opacity-30 cursor-pointer"
                                 onchange="updateRowTotal(${index}); updateTotals();">
-                            <option value="15" selected>15</option>
-                            <option value="30">30</option>
+                            <option value="0" hidden>0</option>
+                            <option value="15" ${currentDefaultTime === 15 ? 'selected' : ''}>15</option>
+                            <option value="30" ${currentDefaultTime === 30 ? 'selected' : ''}>30</option>
                             <option value="45">45</option>
                             <option value="60">60</option>
                         </select>
                     </td>
                     
-                    <!-- 下午/下班時段申請：有(預設勾選)/無/時間(預設啟用) (21% divided) -->
+                    <!-- 下午/下班時段申請 -->
                     <td class="border-2 border-gray-800 px-1 py-1" style="width: 7%;">
                         <input type="checkbox" name="afternoon_status_${index}" value="yes" checked
                                class="h-4 w-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
@@ -507,19 +559,20 @@
                         <select id="afternoon_time_${index}"
                                 class="w-full px-1 text-center bg-transparent border-b border-gray-200 focus:outline-none focus:border-blue-500 text-xs disabled:opacity-30 cursor-pointer"
                                 onchange="updateRowTotal(${index}); updateTotals();">
-                            <option value="15" selected>15</option>
-                            <option value="30">30</option>
+                            <option value="0" hidden>0</option>
+                            <option value="15" ${currentDefaultTime === 15 ? 'selected' : ''}>15</option>
+                            <option value="30" ${currentDefaultTime === 30 ? 'selected' : ''}>30</option>
                             <option value="45">45</option>
                             <option value="60">60</option>
                         </select>
                     </td>
                     
-                    <!-- 每日加班時間 (21% total) -->
+                    <!-- 每日加班時間 -->
                     <td class="border-2 border-gray-800 px-1 py-1 font-semibold text-gray-700 bg-gray-50/10" colspan="2" id="row_total_${index}" style="width: 21%;">
-                        30
+                        ${currentDefaultTime * 2}
                     </td>
                     
-                    <!-- 申請時段是否請假：有/無(預設無) (21% divided) -->
+                    <!-- 申請時段是否請假 -->
                     <td class="border-2 border-gray-800 px-1 py-1" style="width: 10.5%;">
                         <input type="checkbox" name="leave_status_${index}" value="yes" 
                                class="h-4 w-4 text-red-500 border-gray-300 rounded focus:ring-red-500"
@@ -557,20 +610,20 @@
                 const timeSelect = document.getElementById(`morning_time_${index}`);
                 if (selectedValue === 'yes') {
                     timeSelect.removeAttribute('disabled');
-                    timeSelect.value = "15"; // 啟用時重設/預設為 15 分鐘
+                    timeSelect.value = currentDefaultTime.toString(); // 使用當前設定的預設時間
                 } else {
                     timeSelect.setAttribute('disabled', 'true');
-                    timeSelect.value = "15"; // 置灰時也恢復預設值 15
+                    timeSelect.value = "0"; // 置灰時顯示 0
                 }
                 updateRowTotal(index);
             } else if (groupName.startsWith('afternoon_status_')) {
                 const timeSelect = document.getElementById(`afternoon_time_${index}`);
                 if (selectedValue === 'yes') {
                     timeSelect.removeAttribute('disabled');
-                    timeSelect.value = "15"; // 啟用時重設/預設為 15 分鐘
+                    timeSelect.value = currentDefaultTime.toString(); // 使用當前設定的預設時間
                 } else {
                     timeSelect.setAttribute('disabled', 'true');
-                    timeSelect.value = "15"; // 置灰時也恢復預設值 15
+                    timeSelect.value = "0"; // 置灰時顯示 0
                 }
                 updateRowTotal(index);
             }
@@ -632,75 +685,128 @@
 
         /**
          * 匯出至 Word (.doc) 核心技術函數
-         * 解析當前 DOM 中所有的真實輸入值、狀態，完美排版並確保 A4 單頁寬高比例 (特別優化欄寬比例 16%, 21%, 21%, 21%, 21%)
          */
         function exportToWord() {
             const rocYear = document.getElementById("rocYear").value;
             const month = document.getElementById("monthSelect").value;
-            const workDaysText = document.getElementById("workDaysResult").innerText;
-            const unit = document.getElementById("unitInput").value;
-            const jobTitle = document.getElementById("jobTitleInput").value;
-            const name = document.getElementById("nameInput").value;
-            
-            const totalDailyOvertime = document.getElementById("totalDailyOvertime").innerText;
-            const totalOvertimeLabel = document.getElementById("totalOvertimeLabel").innerText;
-            const totalOvertimeValue = document.getElementById("totalOvertimeValue").innerText;
 
-            // 抓取目前選取的人員身分文字
-            const selectedStatusEl = document.querySelector("input[name='personnelStatus']:checked");
-            let statusText = "教師兼行政";
-            if (selectedStatusEl) {
-                statusText = selectedStatusEl.parentElement.innerText.trim();
-            }
-
-            // 動態疊加每一行的資料
-            let rowsHtml = "";
-            const rows = document.getElementById("dailyOvertimeTableBody").children;
+            // 1. 建立外部容器
+            const container = document.createElement('div');
             
-            for (let i = 0; i < rows.length; i++) {
-                // 修正：從使用者可編輯的 input 欄位中動態抓取最新的日期文字，以確保手動修改能被 Word 成功匯出
-                const dateText = document.getElementById(`date_input_${i}`).value.trim();
+            // 2. 複製並設定標題
+            const titleText = document.querySelector('h1').innerText;
+            const titleDiv = document.createElement('div');
+            titleDiv.innerText = titleText;
+            titleDiv.style.textAlign = 'center';
+            titleDiv.style.fontSize = '14pt';
+            titleDiv.style.fontWeight = 'bold';
+            titleDiv.style.marginBottom = '6pt';
+            titleDiv.style.fontFamily = '"Microsoft JhengHei", PMingLiU, sans-serif';
+            container.appendChild(titleDiv);
+
+            // 3. 複製整個表格 DOM 以達到「一成不變」的結構與寬度
+            const originalTable = document.getElementById('applicationTable');
+            const tableClone = originalTable.cloneNode(true);
+            container.appendChild(tableClone);
+
+            // 4. 將 Clone 表格中的 input, select 轉為純文字 (保留勾選狀態與真實輸入值)
+            const originalInputs = originalTable.querySelectorAll('input, select');
+            const clonedInputs = tableClone.querySelectorAll('input, select');
+            
+            for (let i = 0; i < originalInputs.length; i++) {
+                const orig = originalInputs[i];
+                const clone = clonedInputs[i];
                 
-                // 早上
-                const morningYes = document.querySelector(`input[name='morning_status_${i}'][value='yes']`).checked;
-                const morningNo = document.querySelector(`input[name='morning_status_${i}'][value='no']`).checked;
-                const morningTime = document.getElementById(`morning_time_${i}`).value;
-
-                // 下午
-                const afternoonYes = document.querySelector(`input[name='afternoon_status_${i}'][value='yes']`).checked;
-                const afternoonNo = document.querySelector(`input[name='afternoon_status_${i}'][value='no']`).checked;
-                const afternoonTime = document.getElementById(`afternoon_time_${i}`).value;
-
-                // 每日總計
-                const rowTotal = document.getElementById(`row_total_${i}`).innerText;
-
-                // 是否請假
-                const leaveYes = document.querySelector(`input[name='leave_status_${i}'][value='yes']`).checked;
-                const leaveNo = document.querySelector(`input[name='leave_status_${i}'][value='no']`).checked;
-
-                rowsHtml += `
-                    <tr style="text-align: center;">
-                        <td colspan="2" style="border: 1px solid #000000; padding: 2px; font-size: 9pt; font-family: 'Microsoft JhengHei', sans-serif; width: 16%;" width="16%">${dateText}</td>
-                        <td style="border: 1px solid #000000; padding: 2px; font-size: 9.5pt; font-family: 'Microsoft JhengHei', sans-serif; width: 7%;" width="7%">${morningYes ? '☑' : '☐'}</td>
-                        <td style="border: 1px solid #000000; padding: 2px; font-size: 9.5pt; font-family: 'Microsoft JhengHei', sans-serif; width: 7%;" width="7%">${morningNo ? '☑' : '☐'}</td>
-                        <td style="border: 1px solid #000000; padding: 2px; font-size: 9pt; font-family: 'Microsoft JhengHei', sans-serif; width: 7%;" width="7%">${morningYes ? morningTime : ''}</td>
-                        <td style="border: 1px solid #000000; padding: 2px; font-size: 9.5pt; font-family: 'Microsoft JhengHei', sans-serif; width: 7%;" width="7%">${afternoonYes ? '☑' : '☐'}</td>
-                        <td style="border: 1px solid #000000; padding: 2px; font-size: 9.5pt; font-family: 'Microsoft JhengHei', sans-serif; width: 7%;" width="7%">${afternoonNo ? '☑' : '☐'}</td>
-                        <td style="border: 1px solid #000000; padding: 2px; font-size: 9pt; font-family: 'Microsoft JhengHei', sans-serif; width: 7%;" width="7%">${afternoonYes ? afternoonTime : ''}</td>
-                        <td colspan="2" style="border: 1px solid #000000; padding: 2px; font-size: 9.5pt; font-weight: bold; font-family: 'Microsoft JhengHei', sans-serif; width: 21%;" width="21%">${rowTotal}</td>
-                        <td style="border: 1px solid #000000; padding: 2px; font-size: 9.5pt; font-family: 'Microsoft JhengHei', sans-serif; width: 10.5%;" width="10.5%">${leaveYes ? '☑' : '☐'}</td>
-                        <td style="border: 1px solid #000000; padding: 2px; font-size: 9.5pt; font-family: 'Microsoft JhengHei', sans-serif; width: 10.5%;" width="10.5%">${leaveNo ? '☑' : '☐'}</td>
-                    </tr>
-                `;
+                if (orig.classList.contains('no-print')) {
+                    // 移除列印不需要的控制項 (如年/月輸入框)
+                    clone.parentNode.removeChild(clone); 
+                } else if (orig.id === 'unitInput') {
+                    clone.outerHTML = `<span style="font-size:9pt; margin-right: 15pt;">處室：${orig.value || '______'}</span>`;
+                } else if (orig.id === 'jobTitleInput') {
+                    clone.outerHTML = `<span style="font-size:9pt;">職稱：${orig.value || '______'}</span>`;
+                } else if (orig.id === 'nameInput') {
+                    clone.outerHTML = `<span style="font-size:9pt;">姓名：${orig.value || '______'}</span>`;
+                } else if (orig.tagName === 'SELECT') {
+                    clone.outerHTML = `<span style="font-size:9pt;">${orig.options[orig.selectedIndex].text}</span>`;
+                } else if (orig.type === 'checkbox' || orig.type === 'radio') {
+                    // 使用標準的打勾、空方塊符號確保 Word 辨識
+                    const symbol = orig.checked ? '☑' : '☐';
+                    clone.outerHTML = `<span style="font-family: 'Segoe UI Symbol', Arial, sans-serif; font-size:11pt; color: ${orig.checked ? '#1D4ED8' : '#666'};">${symbol}</span>`;
+                } else {
+                    clone.outerHTML = `<span style="font-size:9pt;">${orig.value}</span>`;
+                }
             }
 
-            // 封裝成 Microsoft Office Word 可解析的 MSO HTML 協定格式，完美固定 A4
+            // 5. 處理列印顯示相關的隱藏/顯示類別 (讓它與列印預覽結果相同)
+            const printInlines = tableClone.querySelectorAll('.print\\:inline');
+            printInlines.forEach(el => {
+                el.classList.remove('hidden');
+                el.style.display = 'inline';
+            });
+            const printBlackText = tableClone.querySelectorAll('.print\\:text-black');
+            printBlackText.forEach(el => el.style.color = '#000000');
+
+            // 6. 為 Word 排版補齊所有 inline-styles，取代 Word 不支援的 Tailwind classes
+            tableClone.style.borderCollapse = 'collapse';
+            tableClone.style.width = '100%';
+            tableClone.style.tableLayout = 'fixed';
+
+            const cells = tableClone.querySelectorAll('th, td');
+            cells.forEach(cell => {
+                cell.style.border = '1px solid black';
+                // 極度壓縮 padding 保證不管多少天都能塞進單頁 A4
+                cell.style.padding = '3px 2px'; 
+                cell.style.fontSize = '9pt';
+                cell.style.fontFamily = '"Microsoft JhengHei", PMingLiU, sans-serif';
+                
+                if (cell.classList.contains('text-left')) cell.style.textAlign = 'left';
+                else if (cell.classList.contains('text-right')) cell.style.textAlign = 'right';
+                else cell.style.textAlign = 'center';
+
+                cell.style.verticalAlign = 'middle';
+
+                // 處理背景色 (手動轉換 Tailwind 的 bg-gray 視覺效果)
+                if (cell.classList.contains('bg-gray-50') || cell.closest('.bg-gray-50')) {
+                    cell.style.backgroundColor = '#F9FAFB';
+                } else if (cell.classList.contains('bg-gray-100') || cell.closest('.bg-gray-100')) {
+                    cell.style.backgroundColor = '#F3F4F6';
+                } else if (cell.closest('.bg-blue-50\\/10')) {
+                    cell.style.backgroundColor = '#F8FAFC';
+                } else if (cell.closest('.bg-blue-50\\/30')) {
+                    cell.style.backgroundColor = '#EFF6FF';
+                }
+            });
+
+            // 粗體字強制套用
+            const bolds = tableClone.querySelectorAll('.font-bold, .font-semibold');
+            bolds.forEach(el => el.style.fontWeight = 'bold');
+
+            // 印章欄高度定義為精準的 40pt
+            const stampRows = tableClone.querySelectorAll('.stamp-row');
+            stampRows.forEach(row => {
+                row.style.height = '40pt';
+            });
+
+            // 修正 Word 不支援 flex，轉換為 block 與 inline-block 的間距佈局
+            const flexContainers = tableClone.querySelectorAll('.flex');
+            flexContainers.forEach(container => {
+                container.style.display = 'block';
+                const children = container.children;
+                for(let i = 0; i < children.length; i++) {
+                    if (children[i].tagName === 'LABEL') {
+                        children[i].style.display = 'inline-block';
+                        children[i].style.marginRight = '12pt';
+                    }
+                }
+            });
+
+            // 7. 將組合好的 HTML 裝入 Microsoft Word 的 XML 封裝
             const wordContent = `
                 <html xmlns:o='urn:schemas-microsoft-com:office:office' 
                       xmlns:w='urn:schemas-microsoft-com:office:word' 
                       xmlns='http://www.w3.org/TR/REC-html40'>
                 <head>
-                    <title>高雄市茄萣區茄萣國民小學行政人員延長工作時間申請表</title>
+                    <title>延長工作時間申請表</title>
                     <!--[if gte mso 9]>
                     <xml>
                         <w:WordDocument>
@@ -712,119 +818,25 @@
                     <![endif]-->
                     <style>
                         @page Section1 {
-                            size: 595.3pt 841.9pt; /* A4 標準紙張 */
-                            margin: 24.0pt 28.0pt 24.0pt 28.0pt; /* 窄邊框以確保完整呈現在單頁 */
+                            size: 595.3pt 841.9pt; /* A4 標準尺寸 */
+                            margin: 20.0pt 24.0pt 20.0pt 24.0pt; /* 超窄極限邊界防爆版 */
                         }
-                        div.Section1 {
-                            page: Section1;
-                        }
-                        body {
-                            font-family: "Microsoft JhengHei", "PMingLiU", sans-serif;
-                            font-size: 9.5pt;
-                            line-height: 1.15;
-                        }
-                        table {
-                            border-collapse: collapse;
-                            width: 100%;
-                        }
-                        td, th {
-                            font-family: "Microsoft JhengHei", "PMingLiU", sans-serif;
+                        div.Section1 { page: Section1; }
+                        body { 
+                            font-family: "Microsoft JhengHei", PMingLiU, sans-serif;
+                            line-height: 1.1; 
                         }
                     </style>
                 </head>
                 <body>
                     <div class="Section1">
-                        <p style="text-align: center; font-size: 14pt; font-weight: bold; margin-top: 0px; margin-bottom: 6px; padding: 0;">
-                            高雄市茄萣區茄萣國民小學行政人員延長工作時間申請表
-                        </p>
-                        
-                        <table style="border: 2px solid #000000; width: 100%; border-collapse: collapse; table-layout: fixed;">
-                            <!-- 第一列 -->
-                            <tr style="background-color: #f3f4f6; text-align: center;">
-                                <th colspan="3" style="border: 2px solid #000000; padding: 4px; width: 25%; font-weight: bold; font-size: 9.5pt;">月份日期</th>
-                                <td colspan="6" style="border: 2px solid #000000; padding: 4px; width: 50%; font-size: 9.5pt;">
-                                    中華民國 <b>${rocYear}</b> 年 <b>${month}</b> 月
-                                </td>
-                                <td colspan="3" style="border: 2px solid #000000; padding: 4px; width: 25%; font-weight: bold; font-size: 9.5pt; color: #1d4ed8;">
-                                    ${workDaysText}
-                                </td>
-                            </tr>
-                            <!-- 第二列 -->
-                            <tr>
-                                <td colspan="3" style="border: 2px solid #000000; padding: 4px; font-weight: bold; text-align: center; background-color: #f9fafb; font-size: 9pt;">申請人單位/職稱</td>
-                                <td colspan="6" style="border: 2px solid #000000; padding: 4px; font-size: 9pt;">
-                                    處室：${unit || '______'} &nbsp;&nbsp;&nbsp;&nbsp; 職稱：${jobTitle || '______'}
-                                </td>
-                                <td colspan="3" style="border: 2px solid #000000; padding: 4px; text-align: center; font-size: 9pt;">
-                                    姓名：${name || '______'}
-                                </td>
-                            </tr>
-                            <!-- 第三列 -->
-                            <tr>
-                                <td colspan="3" style="border: 2px solid #000000; padding: 4px; font-weight: bold; text-align: center; background-color: #f9fafb; font-size: 9pt;">人員身分</td>
-                                <td colspan="9" style="border: 2px solid #000000; padding: 4px; font-size: 9pt; font-weight: bold; color: #1d4ed8;">
-                                    ■ ${statusText}
-                                </td>
-                            </tr>
-                            <!-- 第四列 -->
-                            <tr style="height: 32pt;">
-                                <td colspan="3" style="border: 2px solid #000000; padding: 4px; font-weight: bold; text-align: center; background-color: #f9fafb; font-size: 9pt;">當事人簽名確認</td>
-                                <td colspan="3" style="border: 2px solid #000000; padding: 4px;"></td>
-                                <td colspan="3" style="border: 2px solid #000000; padding: 4px; font-weight: bold; text-align: center; background-color: #f9fafb; font-size: 9pt;">人事室</td>
-                                <td colspan="3" style="border: 2px solid #000000; padding: 4px;"></td>
-                            </tr>
-                            <!-- 第五列 -->
-                            <tr style="height: 32pt;">
-                                <td colspan="3" style="border: 2px solid #000000; padding: 4px; font-weight: bold; text-align: center; background-color: #f9fafb; font-size: 9pt;">單位主任</td>
-                                <td colspan="3" style="border: 2px solid #000000; padding: 4px;"></td>
-                                <td colspan="3" style="border: 2px solid #000000; padding: 4px; font-weight: bold; text-align: center; background-color: #f9fafb; font-size: 9pt;">校長</td>
-                                <td colspan="3" style="border: 2px solid #000000; padding: 4px;"></td>
-                            </tr>
-                            <!-- 第六列 -->
-                            <tr style="background-color: #f3f4f6;">
-                                <td colspan="12" style="border: 2px solid #000000; padding: 3px; font-weight: bold; text-align: center; font-size: 9.5pt;">當月份工作日每日延長工作時間情形表</td>
-                            </tr>
-                            
-                            <!-- 第七列 Header 1 (等寬分配，各 21%) -->
-                            <tr style="background-color: #f9fafb; text-align: center; font-size: 8.5pt; font-weight: bold;">
-                                <th rowspan="2" colspan="2" style="border: 2px solid #000000; padding: 3px; width: 16%;" width="16%">加班日期</th>
-                                <th colspan="3" style="border: 2px solid #000000; padding: 2px; width: 21%;" width="21%">早上時段申請</th>
-                                <th colspan="3" style="border: 2px solid #000000; padding: 2px; width: 21%;" width="21%">下午/下班時段申請</th>
-                                <th rowspan="2" colspan="2" style="border: 2px solid #000000; padding: 3px; width: 21%;" width="21%">每日加班時間(分)</th>
-                                <th colspan="2" style="border: 2px solid #000000; padding: 2px; width: 21%;" width="21%">申請時段是否請假</th>
-                            </tr>
-                            <!-- 第八列 Header 2 -->
-                            <tr style="background-color: #f9fafb; text-align: center; font-size: 8pt;">
-                                <th style="border: 2px solid #000000; padding: 2px; font-weight: normal; width: 7%;" width="7%">有</th>
-                                <th style="border: 2px solid #000000; padding: 2px; font-weight: normal; width: 7%;" width="7%">無</th>
-                                <th style="border: 2px solid #000000; padding: 2px; font-weight: normal; width: 7%;" width="7%">時間(分)</th>
-                                <th style="border: 2px solid #000000; padding: 2px; font-weight: normal; width: 7%;" width="7%">有</th>
-                                <th style="border: 2px solid #000000; padding: 2px; font-weight: normal; width: 7%;" width="7%">無</th>
-                                <th style="border: 2px solid #000000; padding: 2px; font-weight: normal; width: 7%;" width="7%">時間(分)</th>
-                                <th style="border: 2px solid #000000; padding: 2px; font-weight: normal; width: 10.5%;" width="10.5%">有</th>
-                                <th style="border: 2px solid #000000; padding: 2px; font-weight: normal; width: 10.5%;" width="10.5%">無</th>
-                            </tr>
-                            
-                            <!-- 每日資料 -->
-                            ${rowsHtml}
-                            
-                            <!-- 彙整倒數第二列 -->
-                            <tr style="background-color: #f9fafb; font-weight: bold; text-align: center;">
-                                <td colspan="8" style="border: 2px solid #000000; padding: 4px; text-align: right; font-size: 9pt;">當月總計延長工作時間總時間</td>
-                                <td colspan="4" style="border: 2px solid #000000; padding: 4px; color: #1d4ed8; font-size: 9.5pt;">${totalDailyOvertime}</td>
-                            </tr>
-                            <!-- 彙整最後一列 -->
-                            <tr style="background-color: #eff6ff; font-weight: bold; text-align: center;">
-                                <td colspan="8" style="border: 2px solid #000000; padding: 4px; text-align: right; font-size: 9.5pt;">${totalOvertimeLabel}</td>
-                                <td colspan="4" style="border: 2px solid #000000; padding: 4px; color: #1d4ed8; font-size: 10pt;">${totalOvertimeValue}</td>
-                            </tr>
-                        </table>
+                        ${container.innerHTML}
                     </div>
                 </body>
                 </html>
             `;
-
-            // 建立下載 Blob
+            
+            // 8. 觸發自動下載
             const blob = new Blob([wordContent], { type: "application/msword;charset=utf-8" });
             const url = URL.createObjectURL(blob);
             const a = document.createElement("a");
@@ -842,6 +854,7 @@
         function resetForm() {
             document.getElementById("rocYear").value = "115";
             document.getElementById("monthSelect").value = "5";
+            currentDefaultTime = 15; // 恢復成 15 分鐘
             
             // 重設文字輸入
             document.getElementById("unitInput").value = "";
