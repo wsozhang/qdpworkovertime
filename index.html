@@ -6,18 +6,17 @@
     <title>高雄市茄萣區茄萣國民小學行政人員延長工作時間申請表</title>
     <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
-    <style>
+<style>
         @media print {
             @page {
                 size: A4 portrait;
-                margin: 0.5cm 0.6cm;
+                margin: 8mm 6mm; /* 縮小天地邊距以獲取更多垂直空間 */
             }
             body {
                 background-color: white !important;
                 color: black !important;
                 padding: 0 !important;
                 margin: 0 !important;
-                font-size: 11px !important;
             }
             .no-print {
                 display: none !important;
@@ -25,6 +24,22 @@
             .print-border {
                 border: 1px solid #000 !important;
             }
+            /* 隱藏外層容器的 Padding 與 Shadow，最大化版面 */
+            .max-w-4xl {
+                padding: 0 !important;
+                margin: 0 !important;
+                border: none !important;
+                box-shadow: none !important;
+                width: 100% !important;
+                max-width: 100% !important;
+            }
+            /* 標題與間距 */
+            h1 {
+                font-size: 20px !important;
+                margin-bottom: 8px !important;
+            }
+            .mb-6 { margin-bottom: 4px !important; }
+            
             /* 排除核取方塊與單選鈕，避免 appearance: none 導致打勾圖示消失 */
             input:not([type="checkbox"]):not([type="radio"]), select, textarea {
                 border: none !important;
@@ -32,39 +47,77 @@
                 appearance: none !important;
                 -webkit-appearance: none !important;
                 padding: 0 !important;
+                margin: 0 !important;
+                height: auto !important;
+                font-size: inherit !important;
             }
-            .print-shadow-none {
-                box-shadow: none !important;
-            }
-            /* 強制列印核取方塊、單選鈕的打勾與選取樣式 */
+            /* 強制列印核取方塊、單選鈕的打勾與選取樣式，並縮小體積 */
             input[type="checkbox"], input[type="radio"] {
                 border: 1px solid #000 !important;
                 -webkit-print-color-adjust: exact !important;
                 print-color-adjust: exact !important;
+                width: 10px !important;
+                height: 10px !important;
+                margin: 0 auto !important;
             }
-            /* 縮緊表格，確保 A4 一頁塞得下所有工作日 */
+            
+            /* 縮緊表格寬度 */
             table {
-                font-size: 12px !important;
-                line-height: 1.15 !important;
+                width: 100% !important;
             }
-            th, td {
-                padding: 2px 3px !important;
+            
+            /* 針對下半部的明細區域極度壓縮字體與間距，以確保塞進一頁 */
+            #dailyOvertimeTableBody th,
+            #dailyOvertimeTableBody td,
+            #applicationTable tbody:first-of-type tr:nth-child(n+5) th,
+            #applicationTable tbody:first-of-type tr:nth-child(n+5) td {
+                font-size: 9.5px !important;
+                line-height: 1.05 !important;
+                padding: 1.5px 2px !important;
+                height: auto !important;
             }
+            
+            /* 讓底部加總列維持原本網頁較大字體，方便閱讀 */
+            #applicationTable tfoot td {
+                font-size: 15px !important;
+                padding: 6px 4px !important;
+                line-height: 1.4 !important;
+            }
+            #applicationTable tfoot #totalDailyOvertime,
+            #applicationTable tfoot #totalOvertimeLabel {
+                font-size: 16px !important;
+            }
+            #applicationTable tfoot #totalOvertimeValue {
+                font-size: 18px !important;
+            }
+            
+            /* 針對上半部（月份、身分、簽章等前4列）維持原本網頁的大字體 */
+            #applicationTable thead th,
+            #applicationTable thead td,
+            #applicationTable tbody:first-of-type tr:nth-child(-n+4) th,
+            #applicationTable tbody:first-of-type tr:nth-child(-n+4) td {
+                font-size: 15px !important;
+                padding: 6px 4px !important; /* 稍微放寬內距，避免太過擁擠 */
+                line-height: 1.4 !important;
+            }
+
+            /* 底部注意事項壓縮 */
             .mt-6 {
                 margin-top: 4px !important;
+                padding-top: 4px !important;
                 font-size: 10px !important;
                 line-height: 1.2 !important;
             }
-            /* 設定簽章蓋印列的高，確保能容納一般印章高度 (約 1.5 cm) */
+            /* 設定簽章蓋印列的高，稍微縮小為 1.2 cm 爭取空間，仍足夠蓋章 */
             .stamp-row {
-                height: 1.5cm !important;
+                height: 1.2cm !important;
             }
         }
     </style>
 </head>
 <body class="bg-gray-50 min-h-screen py-8 px-4 sm:px-6 lg:px-8 text-gray-800">
 
-    <!-- 提示訊息 Modal -->
+<!-- 提示訊息 Modal -->
     <div id="noticeModal" class="fixed inset-0 bg-gray-900 bg-opacity-60 flex items-start justify-center z-50 no-print pt-10 overflow-y-auto">
         <div class="bg-white rounded-xl shadow-2xl p-6 sm:p-8 max-w-md w-full mx-4 my-8 border border-blue-50 transform transition-all scale-100">
             <div class="flex items-center gap-3 mb-4 text-amber-600">
@@ -90,7 +143,7 @@
                     5、如果要手動修改加班日期，請滑鼠直接點選該日期欄位修改。
                 </p>
                  <p class="font-medium bg-blue-50 p-3 rounded-lg border-l-4 border-blue-500">
-                    6、2月、8月的加班時數如果較少建議下載word檔案自行修改成跟3月、9月合併。
+                    6、更新可新增欄位來應對寒假1-2月份與暑假8-9月份的工作日。
                 </p>
             </div>
             <div class="flex justify-end">
@@ -101,10 +154,43 @@
         </div>
     </div>
 
+    <!-- 新增欄位 Modal -->
+    <div id="addRowModal" class="fixed inset-0 bg-gray-900 bg-opacity-60 items-start justify-center z-50 no-print pt-10 overflow-y-auto" style="display: none;">
+        <div class="bg-white rounded-xl shadow-2xl p-6 sm:p-8 max-w-sm w-full mx-4 my-8 border border-blue-50 transform transition-all scale-100">
+            <div class="flex items-center gap-3 mb-4 text-emerald-600">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-7 w-7" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v3m0 0v3m0-3h3m-3 0H9m12 0a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+                <h3 class="text-xl font-bold text-gray-900">增加自訂日期欄位</h3>
+            </div>
+            <div class="mb-6">
+                <label for="addDaysSelect" class="block text-sm font-medium text-gray-700 mb-2">請選擇要增加的天數：</label>
+                <select id="addDaysSelect" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+                    <option value="1">1 天</option>
+                    <option value="2">2 天</option>
+                    <option value="3">3 天</option>
+                    <option value="4">4 天</option>
+                    <option value="5">5 天</option>
+                </select>
+            </div>
+            <div class="flex justify-end gap-3">
+                <button onclick="closeAddRowModal()" class="px-4 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 font-medium rounded-lg transition">取消</button>
+                <button onclick="confirmAddRows()" class="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white font-medium rounded-lg shadow-sm transition">確定</button>
+            </div>
+        </div>
+    </div>
+
     <div class="max-w-4xl mx-auto bg-white p-6 sm:p-8 rounded-xl shadow-md print-shadow-none border border-gray-100 print-border">
         
         <!-- 頂部操作按鈕 (列印時隱藏) 加入 flex-wrap 防止按鈕過多時跑版 -->
         <div class="flex flex-wrap justify-end gap-3 mb-6 no-print">
+            <!-- 增加欄位按鈕 -->
+            <button onclick="openAddRowModal()" class="px-4 py-2 bg-emerald-500 hover:bg-emerald-600 text-white font-medium rounded-lg shadow-sm transition flex items-center gap-2">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
+                </svg>
+                增加欄位
+            </button>
             <!-- 新增的預設時間 15 分按鈕 -->
             <button onclick="setDefaultTime(15)" class="px-4 py-2 bg-indigo-500 hover:bg-indigo-600 text-white font-medium rounded-lg shadow-sm transition flex items-center gap-2">
                 <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -371,14 +457,14 @@
 
         // 台灣固定國定假日定義
         const fixedHolidays = [
-            "01-01", "02-28", "04-04", "04-05", "05-01", "10-10","10-25","12-25"
+            "01-01", "02-28", "04-04", "04-05", "05-01","09-28", "10-10","12-25"
         ];
 
         // 估算特定西元年的農曆變動國定假日對照表 (2024~2030)
         const variableHolidays = {
             2024: ["02-08", "02-09", "02-10", "02-11", "02-12", "02-13", "02-14", "04-04", "04-05", "06-10", "09-17"],
             2025: ["01-27", "01-28", "01-29", "01-30", "01-31", "02-01", "02-02", "04-03", "04-04", "05-30", "05-31", "10-06"],
-            2026: ["02-13", "02-14", "02-15", "02-16", "02-17", "02-18", "02-19", "02-20", "02-21", "04-03", "04-04", "04-05", "04-06", "06-19", "09-25"],
+            2026: ["02-13", "02-14", "02-15", "02-16", "02-17", "02-18", "02-19", "02-20", "02-21", "04-02", "04-03", "04-04", "04-05", "06-19", "09-25","10-26","10-09","12-14"],
             2027: ["02-05", "02-06", "02-07", "02-08", "02-09", "02-10", "02-11", "02-12", "04-02", "04-03", "04-04", "04-05", "06-09", "09-15"],
             2028: ["01-25", "01-26", "01-27", "01-28", "01-29", "01-30", "01-31", "02-01", "02-02", "04-03", "04-04", "04-05", "05-28", "10-03"],
             2029: ["02-12", "02-13", "02-14", "02-15", "02-16", "02-17", "02-18", "04-04", "04-05", "04-06", "06-15", "09-21"],
@@ -387,7 +473,7 @@
 
         // 補班工作日定義
         const makeUpWorkdays = [
-            "2024-02-17", "2025-02-08"
+            "2024-02-17", "2025-02-08","2026-12-12"
         ];
 
         // 星期名稱對照
@@ -400,6 +486,118 @@
             const modal = document.getElementById("noticeModal");
             modal.style.display = "none";
         }
+
+        /**
+         * 開啟/關閉新增欄位 Modal
+         */
+        function openAddRowModal() {
+            document.getElementById("addRowModal").style.display = "flex";
+            document.getElementById("addDaysSelect").value = "1"; // 預設 1 天
+        }
+
+        function closeAddRowModal() {
+            document.getElementById("addRowModal").style.display = "none";
+        }
+
+        /**
+         * 確認新增欄位
+         */
+        function confirmAddRows() {
+            const numDays = parseInt(document.getElementById("addDaysSelect").value, 10);
+            const tbody = document.getElementById("dailyOvertimeTableBody");
+
+            // 如果目前表格內是「尚無工作日資料」佔位列，先清除再新增，避免計算錯誤
+            if (tbody.children.length === 1 && tbody.children[0].innerText.includes("尚無工作日資料")) {
+                tbody.innerHTML = "";
+            }
+
+            for (let i = 0; i < numDays; i++) {
+                const index = tbody.children.length; // 取得下一個 index 以防止 ID 衝突
+                
+                const tr = document.createElement("tr");
+                tr.className = "hover:bg-gray-50/50 transition text-center";
+                tr.innerHTML = `
+                    <!-- 日期 -->
+                    <td class="border-2 border-gray-800 px-1 py-1 font-medium bg-gray-50/20" colspan="2" style="width: 16%;">
+                        <input type="text" id="date_input_${index}" value="" placeholder="請輸入日期" 
+                               class="w-full text-center bg-transparent focus:outline-none focus:ring-1 focus:ring-blue-500 rounded text-xs sm:text-sm py-1 font-semibold text-blue-700">
+                    </td>
+                    
+                    <!-- 早上時段申請 -->
+                    <td class="border-2 border-gray-800 px-1 py-1" style="width: 7%;">
+                        <input type="checkbox" name="morning_status_${index}" value="yes" checked
+                               class="h-4 w-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+                               onchange="toggleCheckboxes('morning_status_${index}', 'yes', ${index}); updateTotals();">
+                    </td>
+                    <td class="border-2 border-gray-800 px-1 py-1" style="width: 7%;">
+                        <input type="checkbox" name="morning_status_${index}" value="no"
+                               class="h-4 w-4 text-gray-400 border-gray-300 rounded focus:ring-blue-500"
+                               onchange="toggleCheckboxes('morning_status_${index}', 'no', ${index}); updateTotals();">
+                    </td>
+                    <td class="border-2 border-gray-800 px-1 py-1" style="width: 7%;">
+                        <select id="morning_time_${index}"
+                                class="w-full px-1 text-center bg-transparent border-b border-gray-200 focus:outline-none focus:border-blue-500 text-xs disabled:opacity-30 cursor-pointer"
+                                onchange="updateRowTotal(${index}); updateTotals();">
+                            <option value="0" hidden>0</option>
+                            <option value="15" ${currentDefaultTime === 15 ? 'selected' : ''}>15</option>
+                            <option value="30" ${currentDefaultTime === 30 ? 'selected' : ''}>30</option>
+                            <option value="45">45</option>
+                            <option value="60">60</option>
+                        </select>
+                    </td>
+                    
+                    <!-- 下午/下班時段申請 -->
+                    <td class="border-2 border-gray-800 px-1 py-1" style="width: 7%;">
+                        <input type="checkbox" name="afternoon_status_${index}" value="yes" checked
+                               class="h-4 w-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+                               onchange="toggleCheckboxes('afternoon_status_${index}', 'yes', ${index}); updateTotals();">
+                    </td>
+                    <td class="border-2 border-gray-800 px-1 py-1" style="width: 7%;">
+                        <input type="checkbox" name="afternoon_status_${index}" value="no"
+                               class="h-4 w-4 text-gray-400 border-gray-300 rounded focus:ring-blue-500"
+                               onchange="toggleCheckboxes('afternoon_status_${index}', 'no', ${index}); updateTotals();">
+                    </td>
+                    <td class="border-2 border-gray-800 px-1 py-1" style="width: 7%;">
+                        <select id="afternoon_time_${index}"
+                                class="w-full px-1 text-center bg-transparent border-b border-gray-200 focus:outline-none focus:border-blue-500 text-xs disabled:opacity-30 cursor-pointer"
+                                onchange="updateRowTotal(${index}); updateTotals();">
+                            <option value="0" hidden>0</option>
+                            <option value="15" ${currentDefaultTime === 15 ? 'selected' : ''}>15</option>
+                            <option value="30" ${currentDefaultTime === 30 ? 'selected' : ''}>30</option>
+                            <option value="45">45</option>
+                            <option value="60">60</option>
+                        </select>
+                    </td>
+                    
+                    <!-- 每日加班時間 -->
+                    <td class="border-2 border-gray-800 px-1 py-1 font-semibold text-gray-700 bg-gray-50/10" colspan="2" id="row_total_${index}" style="width: 21%;">
+                        ${currentDefaultTime * 2}
+                    </td>
+                    
+                    <!-- 申請時段是否請假 -->
+                    <td class="border-2 border-gray-800 px-1 py-1" style="width: 10.5%;">
+                        <input type="checkbox" name="leave_status_${index}" value="yes" 
+                               class="h-4 w-4 text-red-500 border-gray-300 rounded focus:ring-red-500"
+                               onchange="toggleCheckboxes('leave_status_${index}', 'yes', ${index})">
+                    </td>
+                    <td class="border-2 border-gray-800 px-1 py-1" style="width: 10.5%;">
+                        <input type="checkbox" name="leave_status_${index}" value="no" checked
+                               class="h-4 w-4 text-gray-400 border-gray-300 rounded focus:ring-red-500"
+                               onchange="toggleCheckboxes('leave_status_${index}', 'no', ${index})">
+                    </td>
+                `;
+                tbody.appendChild(tr);
+                updateRowTotal(index); // 初始化剛加入行的計算
+            }
+            
+            updateTotals(); // 整體重算
+            
+            // 將新增後的總行數（也就是總天數）更新至畫面上方
+            document.getElementById("workDaysResult").innerText = `共計 ${tbody.children.length} 工作日`;
+            
+            closeAddRowModal();
+        }
+
 
         /**
          * 變更全域加班預設時間並更新現有有勾選的欄位
