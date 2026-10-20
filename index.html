@@ -145,6 +145,9 @@
                  <p class="font-medium bg-blue-50 p-3 rounded-lg border-l-4 border-blue-500">
                     6、更新可新增欄位來應對寒假1-2月份與暑假8-9月份的工作日。
                 </p>
+                 <p class="font-medium bg-blue-50 p-3 rounded-lg border-l-4 border-blue-500">
+                    7、更新可選擇只上午加班或下午加班(限教師兼任行政)。
+                </p>
             </div>
             <div class="flex justify-end">
                 <button onclick="closeModal()" class="w-full sm:w-auto px-6 py-2.5 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-lg shadow-sm transition">
@@ -205,7 +208,21 @@
                 </svg>
                 加班預設時間30分
             </button>
-
+            <!-- 只早上加班按鈕 -->
+            <button onclick="setMorningOnly()" class="px-4 py-2 bg-amber-500 hover:bg-amber-600 text-white font-medium rounded-lg shadow-sm transition flex items-center gap-2">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z" />
+                </svg>
+                只早上加班
+            </button>
+            
+            <!-- 只下午加班按鈕 -->
+            <button onclick="setAfternoonOnly()" class="px-4 py-2 bg-amber-500 hover:bg-amber-600 text-white font-medium rounded-lg shadow-sm transition flex items-center gap-2">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z" />
+                </svg>
+                只下午加班
+            </button>
             <!-- 列印申請表按鈕 -->
             <button onclick="window.print()" class="px-4 py-2 bg-green-600 hover:bg-green-700 text-white font-medium rounded-lg shadow-sm transition flex items-center gap-2">
                 <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -623,7 +640,48 @@
             }
             updateTotals();
         }
+         /**
+         * 設定為只早上加班 (早上設為有，下午設為無)
+         */
+        function setMorningOnly() {
+            const rowsCount = document.getElementById("dailyOvertimeTableBody").children.length;
+            for (let i = 0; i < rowsCount; i++) {
+                // 檢查是否是正常的輸入行 (非空資料行)
+                const mornYesCb = document.querySelector(`input[name='morning_status_${i}'][value='yes']`);
+                if (mornYesCb) {
+                    mornYesCb.checked = true;
+                    toggleCheckboxes(`morning_status_${i}`, 'yes', i);
+                    
+                    const afterNoCb = document.querySelector(`input[name='afternoon_status_${i}'][value='no']`);
+                    if (afterNoCb) {
+                        afterNoCb.checked = true;
+                        toggleCheckboxes(`afternoon_status_${i}`, 'no', i);
+                    }
+                }
+            }
+            updateTotals();
+        }
 
+        /**
+         * 設定為只下午加班 (早上設為無，下午設為有)
+         */
+        function setAfternoonOnly() {
+            const rowsCount = document.getElementById("dailyOvertimeTableBody").children.length;
+            for (let i = 0; i < rowsCount; i++) {
+                const mornNoCb = document.querySelector(`input[name='morning_status_${i}'][value='no']`);
+                if (mornNoCb) {
+                    mornNoCb.checked = true;
+                    toggleCheckboxes(`morning_status_${i}`, 'no', i);
+                    
+                    const afterYesCb = document.querySelector(`input[name='afternoon_status_${i}'][value='yes']`);
+                    if (afterYesCb) {
+                        afterYesCb.checked = true;
+                        toggleCheckboxes(`afternoon_status_${i}`, 'yes', i);
+                    }
+                }
+            }
+            updateTotals();
+        }
         /**
          * 計算指定年月的工作天數並產生明細行
          */
